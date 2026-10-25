@@ -1,0 +1,65 @@
+MODULE user(semaphore)
+VAR
+    held : 0..3;
+    process_state: {idle,critical,waiting};
+    input: {acquire, release};
+DEFINE
+    do_acq := input = acquire & semaphore > 0 & held < 3;
+    do_rel := input = release & semaphore < 3 & held > 0;
+    
+ASSIGN
+    next(semaphore):=
+        case
+            do_acq: semaphore - 1;
+            do_rel: semaphore + 1;
+            TRUE : semaphore;
+        esac;
+    
+    init(held) := 0;
+    next(held) :=
+        case
+            do_acq : held + 1;
+            do_rel : held - 1;
+            TRUE : held;
+        esac;    
+    
+    init(process_state) := idle;
+    next(process_state) :=
+        case
+            input = acquire & semaphore = 0: waiting;
+            do_acq : critical;
+            do_rel & held <= 1 : idle;
+            do_rel & held > 1 : critical;
+            TRUE : process_state;
+        esac;
+            
+MODULE main
+VAR
+    semaphore : 0..3;
+    proc1 : process user(semaphore);
+    proc2 : process user(semaphore);
+ASSIGN
+    init(semaphore) := 3;
+
+LTLSPEC G( semaphore + proc1.held + proc2.held = 3);
+
+-- question 1
+LTLSPEC G((proc1.running & proc1.do_acq ) -> X (proc1.process_state = critical));
+LTLSPEC G((proc1.running & proc1.input = acquire & semaphore = 0 ) -> X (proc1.process_state = waiting));
+--LTLSPEC G((proc2.running & proc1.held = 3) -> X proc2.process_state = waiting);
+-- question 2
+
+-- question 3
+CTLSPEC EF EG (proc1.process_state = waiting);
+--question 4
+LTLSPEC G(semaphore >= 0 & semaphore <= 3);
+
+-- question 6
+CTLSPEC EF EG (semaphore = 0);
+
+-- question 7
+LTLSPEC G((proc1.process_state = waiting & proc2.process_state = waiting) -> semaphore = 0);
+
+-- question 9
+
+
