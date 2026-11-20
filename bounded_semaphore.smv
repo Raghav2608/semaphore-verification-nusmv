@@ -32,7 +32,7 @@ ASSIGN
             do_rel & held > 1 : critical;
             TRUE : process_state;
         esac;
-            
+        
 MODULE main
 VAR
     semaphore : 0..3;
@@ -61,5 +61,5 @@ CTLSPEC EF EG (semaphore = 0);
 LTLSPEC G((proc1.process_state = waiting & proc2.process_state = waiting) -> semaphore = 0);
 
 -- question 9
-
+LTLSPEC G(proc1.process_state = waiting -> F proc1.process_state = critical)
 
